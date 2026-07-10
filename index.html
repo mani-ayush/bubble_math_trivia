@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Math Trivia - Pop to Solve!</title>
+    <meta name="description" content="A gamified math trivia game where you pop floating bubbles by solving addition, subtraction, multiplication, and division problems. Features dynamic difficulty, scores, and particles!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background ambient glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+    
+    <!-- Floating decorative symbols in the background -->
+    <div class="background-decorations" id="bg-decorations"></div>
+
+    <div class="app-container">
+        <!-- Audio controller toggler -->
+        <button id="sound-toggle" class="sound-btn" aria-label="Toggle Sound">
+            <svg class="sound-icon sound-on" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.85 14,18.71V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.77 16.5,12M3,9V15H7L12,20V4L7,9H3Z" />
+            </svg>
+            <svg class="sound-icon sound-off hidden" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M12,4L7,9H3V15H7L12,20V4M16.5,12C16.5,10.23 15.5,8.71 14,7.97V11.17L16.43,13.6C16.48,13.08 16.5,12.55 16.5,12M19,12C19,12.9 18.82,13.75 18.5,14.55L19.95,16C20.63,14.82 21,13.46 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.5C15.58,18.04 14.83,18.46 14,18.7V20.76C15.38,20.45 16.63,19.74 17.68,18.83L20.73,21.88L22,20.61L4.27,3Z" />
+            </svg>
+        </button>
+
+        <!-- 1. LANDING PAGE -->
+        <main id="landing-page" class="screen active">
+            <header class="logo-container">
+                <div class="logo-bubble">
+                    <span class="math-sym">+</span>
+                    <span class="math-sym">−</span>
+                    <span class="math-sym">×</span>
+                    <span class="math-sym">÷</span>
+                </div>
+                <h1 class="game-title">BUBBLE MATH<br><span class="gradient-text">TRIVIA</span></h1>
+                <p class="tagline">Pop bubbles by solving math trivia! How fast can you calculate?</p>
+            </header>
+
+            <section class="mode-select-section card">
+                <h2>Choose Game Mode</h2>
+                <div class="mode-grid">
+                    <button class="mode-card active" id="mode-addition" data-mode="addition">
+                        <div class="mode-icon">+</div>
+                        <div class="mode-details">
+                            <h3>Addition</h3>
+                            <p>1-digit scaling to 3-digits.</p>
+                        </div>
+                    </button>
+                    <button class="mode-card" id="mode-subtraction" data-mode="subtraction">
+                        <div class="mode-icon">−</div>
+                        <div class="mode-details">
+                            <h3>Subtraction</h3>
+                            <p>1-digit scaling to 3-digits.</p>
+                        </div>
+                    </button>
+                    <button class="mode-card" id="mode-multiplication" data-mode="multiplication">
+                        <div class="mode-icon">×</div>
+                        <div class="mode-details">
+                            <h3>Multiplication</h3>
+                            <p>Capped at 2-digits. 2 to 3 bubbles.</p>
+                        </div>
+                    </button>
+                    <button class="mode-card" id="mode-division" data-mode="division">
+                        <div class="mode-icon">÷</div>
+                        <div class="mode-details">
+                            <h3>Division</h3>
+                            <p>Capped at 2-digit factors. 2 to 3 bubbles.</p>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <section class="stats-section card">
+                <div class="high-scores-container">
+                    <div class="score-tab-grid">
+                        <div class="score-tab">
+                            <span class="score-label">Add Record</span>
+                            <span class="score-val" id="high-score-addition">0</span>
+                        </div>
+                        <div class="score-tab">
+                            <span class="score-label">Sub Record</span>
+                            <span class="score-val" id="high-score-subtraction">0</span>
+                        </div>
+                        <div class="score-tab">
+                            <span class="score-label">Mul Record</span>
+                            <span class="score-val" id="high-score-multiplication">0</span>
+                        </div>
+                        <div class="score-tab">
+                            <span class="score-label">Div Record</span>
+                            <span class="score-val" id="high-score-division">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <button id="start-game-btn" class="btn primary-btn pulse-glow">START POPPING</button>
+        </main>
+
+        <!-- 2. GAME SCREEN -->
+        <main id="game-screen" class="screen">
+            <header class="game-header">
+                <div class="header-left">
+                    <div class="stat-badge">
+                        <span class="badge-label">SCORE</span>
+                        <span id="game-score" class="badge-val">0</span>
+                    </div>
+                    <div class="stat-badge" id="multiplier-badge">
+                        <span class="badge-label">STREAK</span>
+                        <span id="game-streak" class="badge-val">x1</span>
+                    </div>
+                </div>
+                
+                <div class="header-center">
+                    <span id="level-display" class="level-indicator">Level 1</span>
+                    <span id="game-mode-display" class="mode-indicator">Addition</span>
+                </div>
+
+                <div class="header-right">
+                    <div class="lives-container" id="lives-box">
+                        <span class="heart active">❤️</span>
+                        <span class="heart active">❤️</span>
+                        <span class="heart active">❤️</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Play Area -->
+            <section class="play-field" id="play-field">
+                <!-- Canvas for drawing bubble pop particles -->
+                <canvas id="particle-canvas" class="particle-layer"></canvas>
+                <!-- Container where bubble divs will be generated -->
+                <div id="bubble-container" class="bubble-layer"></div>
+                <!-- Interactive alerts (Level Up, Speed Warning) -->
+                <div id="announcement" class="announcement-banner hidden">LEVEL UP!</div>
+            </section>
+
+            <!-- Input Area -->
+            <footer class="game-controls">
+                <div class="input-wrapper">
+                    <input type="number" id="answer-input" class="math-input" placeholder="Type answer here..." pattern="[0-9]*" inputmode="numeric" autocomplete="off" autofocus>
+                    <div class="input-glow"></div>
+                </div>
+                <p class="input-tip">Type the correct answer to pop a bubble immediately!</p>
+            </footer>
+        </main>
+
+        <!-- 3. RESULTS SCREEN -->
+        <main id="results-screen" class="screen">
+            <div class="results-card card">
+                <div class="trophy-icon">🏆</div>
+                <h2 id="results-title">Game Over</h2>
+                <p id="results-mode" class="subtitle">Addition Mode</p>
+
+                <div class="results-grid">
+                    <div class="result-item">
+                        <span class="result-label">Final Score</span>
+                        <span id="final-score" class="result-value text-accent">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Max Streak</span>
+                        <span id="final-streak" class="result-value">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Bubbles Burst</span>
+                        <span id="final-burst" class="result-value">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Level Reached</span>
+                        <span id="final-level" class="result-value">1</span>
+                    </div>
+                </div>
+
+                <div id="new-high-score-banner" class="high-score-banner hidden">
+                    🎉 NEW HIGH SCORE! 🎉
+                </div>
+
+                <div class="results-actions">
+                    <button id="retry-btn" class="btn primary-btn">PLAY AGAIN</button>
+                    <button id="menu-btn" class="btn secondary-btn">MAIN MENU</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
