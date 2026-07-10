@@ -517,6 +517,7 @@ body {
 #game-screen {
     padding: 1.2rem 1rem;
     justify-content: space-between;
+    overflow: hidden; /* Locks the header in place when keyboard opens */
 }
 
 .game-header {
