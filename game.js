@@ -1,9 +1,9 @@
 /**
- * BUBBLE MATH TRIVIA - Complete Game Script with Direct Auto-Saving Leaderboard
+ * BUBBLE MATH TRIVIA - Complete Game Script with Permanent Player Identity & Auto-Saving
  */
 
 // ==========================================================================
-// SUPABASE CLOUD LEADERBOARD SETUP (PRE-CONFIGURED WITH YOUR KEYS!)
+// SUPABASE CLOUD LEADERBOARD SETUP
 // ==========================================================================
 const SUPABASE_URL = 'https://wnxqllumojhqgrrvcufz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndueHFsbHVtb2pocWdycnZjdWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3Nzc0NjQsImV4cCI6MjA5OTM1MzQ2NH0.5fY8sEx0YWlA3ojp164pgzyX1NiUtJHmoHCxYbuDYcc';
@@ -326,6 +326,43 @@ const dom = {
 };
 
 // ==========================================================================
+// BULLETPROOF PLAYER IDENTITY MANAGER 🔒
+// ==========================================================================
+function getOrSetPlayerName(customName = null) {
+    const STORAGE_KEY = 'bubble_math_player_name';
+    
+    // 1. If the player manually typed a new name and clicked update, lock it in!
+    if (customName && customName.trim().length > 0) {
+        const cleanName = customName.trim().toUpperCase();
+        localStorage.setItem(STORAGE_KEY, cleanName);
+        if (dom.nameInput) dom.nameInput.value = cleanName;
+        return cleanName;
+    }
+    
+    // 2. Try to grab their existing permanently saved identity from localStorage
+    let existingName = localStorage.getItem(STORAGE_KEY);
+    
+    // 3. If they don't have one yet (very first time playing on this device), generate and lock!
+    if (!existingName || existingName.trim() === '') {
+        existingName = getRandomUsername();
+        localStorage.setItem(STORAGE_KEY, existingName);
+    }
+    
+    // Ensure UI always displays their official locked-in name
+    if (dom.nameInput) dom.nameInput.value = existingName;
+    return existingName;
+}
+
+function getRandomUsername() {
+    const adjectives = ['FAST', 'SMART', 'SUPER', 'HYPER', 'MEGA', 'ULTRA', 'COSMIC', 'NEON', 'SPEEDY', 'LOGIC'];
+    const nouns = ['WIZARD', 'NINJA', 'POPPER', 'SOLVER', 'GENIUS', 'HERO', 'LEGEND', 'MASTER', 'PILOT', 'BRAIN'];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(10 + Math.random() * 90);
+    return `${adj}_${noun}${num}`;
+}
+
+// ==========================================================================
 // CORE FUNCTIONS
 // ==========================================================================
 function init() {
@@ -334,13 +371,8 @@ function init() {
     updateMuteUI();
     state.particles = new ParticleSystem('particle-canvas');
     
-    // Ensure player has a persistent arcade username saved
-    let savedName = localStorage.getItem('bubble_math_player_name');
-    if (!savedName) {
-        savedName = getRandomUsername();
-        localStorage.setItem('bubble_math_player_name', savedName);
-    }
-    if (dom.nameInput) dom.nameInput.value = savedName;
+    // Lock in player identity immediately on load
+    getOrSetPlayerName();
     
     // Wire up events
     dom.soundToggle.addEventListener('click', toggleMute);
@@ -358,7 +390,7 @@ function init() {
     if (dom.leaderboardBtn) dom.leaderboardBtn.addEventListener('click', () => openLeaderboard(state.mode));
     if (dom.closeModalBtn) dom.closeModalBtn.addEventListener('click', closeLeaderboard);
     
-    // Clicking the button now manually updates their username and resubmits!
+    // Clicking the button manually updates their username and resubmits!
     if (dom.submitScoreBtn) dom.submitScoreBtn.addEventListener('click', () => submitScoreToCloud(false));
     
     dom.tabBtns.forEach(btn => {
@@ -735,13 +767,12 @@ function endGame() {
     if (isNewHighScore) dom.newHighScoreBanner.classList.remove('hidden');
     else dom.newHighScoreBanner.classList.add('hidden');
     
-    // Ensure name box displays their persistent arcade username
-    const currentName = localStorage.getItem('bubble_math_player_name') || getRandomUsername();
-    if (dom.nameInput) dom.nameInput.value = currentName;
+    // Ensure name box displays their locked identity
+    getOrSetPlayerName();
     
     switchScreen('results');
 
-    // ⚡ AUTOMATIC DIRECT CLOUD SUBMISSION (Zero clicks required!)
+    // ⚡ AUTOMATIC DIRECT CLOUD SUBMISSION
     if (state.score > 0) {
         submitScoreToCloud(true);
     } else if (dom.submitScoreBtn) {
@@ -776,15 +807,6 @@ function renderLoop() {
 // ==========================================================================
 // LEADERBOARD & AUTO-SAVING LOGIC
 // ==========================================================================
-function getRandomUsername() {
-    const adjectives = ['FAST', 'SMART', 'SUPER', 'HYPER', 'MEGA', 'ULTRA', 'COSMIC', 'NEON', 'SPEEDY', 'LOGIC'];
-    const nouns = ['WIZARD', 'NINJA', 'POPPER', 'SOLVER', 'GENIUS', 'HERO', 'LEGEND', 'MASTER', 'PILOT', 'BRAIN'];
-    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const noun = nouns[Math.floor(Math.random() * nouns.length)];
-    const num = Math.floor(10 + Math.random() * 90);
-    return `${adj}_${noun}${num}`;
-}
-
 function openLeaderboard(modeToLoad = 'addition') {
     dom.modal.classList.remove('hidden');
     sfx.playPop();
@@ -849,16 +871,10 @@ async function fetchAndRenderLeaderboard(mode) {
     dom.leaderboardContent.innerHTML = tableHtml;
 }
 
-// Handles both Direct Auto-Submitting AND manual name changes!
 async function submitScoreToCloud(isAuto = false) {
-    let playerName = dom.nameInput.value.trim().toUpperCase();
-    if (!playerName) {
-        playerName = getRandomUsername();
-        dom.nameInput.value = playerName;
-    }
-    
-    // Remember this name forever
-    localStorage.setItem('bubble_math_player_name', playerName);
+    // If auto-saving, just grab their permanent identity. If clicking button, take whatever they typed in the box!
+    const typedValue = (dom.nameInput && !isAuto) ? dom.nameInput.value : null;
+    const playerName = getOrSetPlayerName(typedValue);
     
     if (state.score <= 0 || !supabaseClient) return;
     
@@ -881,7 +897,6 @@ async function submitScoreToCloud(isAuto = false) {
     } else {
         sfx.playCorrect();
         if (dom.submitScoreBtn) {
-            // Let them know it was handled automatically!
             dom.submitScoreBtn.innerText = isAuto ? `✅ AUTO-SAVED AS ${playerName}!` : `✅ UPDATED TO ${playerName}!`;
         }
         
