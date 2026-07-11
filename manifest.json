@@ -1,0 +1,16 @@
+{
+  "name": "Bubble Math Trivia",
+  "short_name": "BubbleMath",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070814",
+  "theme_color": "#9d4edd",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
