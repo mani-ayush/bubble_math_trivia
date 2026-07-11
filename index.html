@@ -15,10 +15,9 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <div class="bg-glow bg-glow-3"></div>
-    
+         
     <!-- Floating decorative symbols in the background -->
     <div class="background-decorations" id="bg-decorations"></div>
-
     <div class="app-container">
         <!-- Audio controller toggler -->
         <button id="sound-toggle" class="sound-btn" aria-label="Toggle Sound">
@@ -29,7 +28,7 @@
                 <path fill="currentColor" d="M12,4L7,9H3V15H7L12,20V4M16.5,12C16.5,10.23 15.5,8.71 14,7.97V11.17L16.43,13.6C16.48,13.08 16.5,12.55 16.5,12M19,12C19,12.9 18.82,13.75 18.5,14.55L19.95,16C20.63,14.82 21,13.46 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.5C15.58,18.04 14.83,18.46 14,18.7V20.76C15.38,20.45 16.63,19.74 17.68,18.83L20.73,21.88L22,20.61L4.27,3Z" />
             </svg>
         </button>
-
+        
         <!-- 1. LANDING PAGE -->
         <main id="landing-page" class="screen active">
             <header class="logo-container">
@@ -42,7 +41,6 @@
                 <h1 class="game-title">BUBBLE MATH<br><span class="gradient-text">TRIVIA</span></h1>
                 <p class="tagline">Pop bubbles by solving math trivia! How fast can you calculate?</p>
             </header>
-
             <section class="mode-select-section card">
                 <h2>Choose Game Mode</h2>
                 <div class="mode-grid">
@@ -76,7 +74,6 @@
                     </button>
                 </div>
             </section>
-
             <section class="stats-section card">
                 <div class="high-scores-container">
                     <div class="score-tab-grid">
@@ -99,10 +96,10 @@
                     </div>
                 </div>
             </section>
-
             <button id="start-game-btn" class="btn primary-btn pulse-glow">START POPPING</button>
+            <button id="show-leaderboard-btn" class="btn secondary-btn" style="margin-top: 0.6rem;">🏆 VIEW LEADERBOARD</button>
         </main>
-
+        
         <!-- 2. GAME SCREEN -->
         <main id="game-screen" class="screen">
             <header class="game-header">
@@ -116,12 +113,11 @@
                         <span id="game-streak" class="badge-val">x1</span>
                     </div>
                 </div>
-                
+                                 
                 <div class="header-center">
                     <span id="level-display" class="level-indicator">Level 1</span>
                     <span id="game-mode-display" class="mode-indicator">Addition</span>
                 </div>
-
                 <div class="header-right">
                     <div class="lives-container" id="lives-box">
                         <span class="heart active">❤️</span>
@@ -130,7 +126,7 @@
                     </div>
                 </div>
             </header>
-
+            
             <!-- Play Area -->
             <section class="play-field" id="play-field">
                 <!-- Canvas for drawing bubble pop particles -->
@@ -140,7 +136,7 @@
                 <!-- Interactive alerts (Level Up, Speed Warning) -->
                 <div id="announcement" class="announcement-banner hidden">LEVEL UP!</div>
             </section>
-
+            
             <!-- Input Area -->
             <footer class="game-controls">
                 <div class="input-wrapper">
@@ -150,14 +146,13 @@
                 <p class="input-tip">Type the correct answer to pop a bubble immediately!</p>
             </footer>
         </main>
-
+        
         <!-- 3. RESULTS SCREEN -->
         <main id="results-screen" class="screen">
             <div class="results-card card">
                 <div class="trophy-icon">🏆</div>
                 <h2 id="results-title">Game Over</h2>
                 <p id="results-mode" class="subtitle">Addition Mode</p>
-
                 <div class="results-grid">
                     <div class="result-item">
                         <span class="result-label">Final Score</span>
@@ -176,9 +171,15 @@
                         <span id="final-level" class="result-value">1</span>
                     </div>
                 </div>
-
+                
                 <div id="new-high-score-banner" class="high-score-banner hidden">
-                    🎉 NEW HIGH SCORE! 🎉
+                      🎉 NEW HIGH SCORE! 🎉
+                </div>
+                
+                <!-- Cloud Score Submission Box -->
+                <div id="score-submit-box" class="score-submit-container">
+                    <input type="text" id="player-name-input" class="name-input" placeholder="NAME (OR BLANK FOR RANDOM)" maxlength="12" autocomplete="off">
+                    <button id="submit-score-btn" class="btn primary-btn" style="margin-bottom: 0.8rem; background: linear-gradient(135deg, var(--accent-division) 0%, #058c68 100%);">SUBMIT TO CLOUD</button>
                 </div>
 
                 <div class="results-actions">
@@ -187,8 +188,27 @@
                 </div>
             </div>
         </main>
-    </div>
 
+        <!-- 4. GLOBAL LEADERBOARD MODAL -->
+        <div id="leaderboard-modal" class="modal-overlay hidden">
+            <div class="modal-card card">
+                <button id="close-modal-btn" class="close-modal-btn">&times;</button>
+                <h2 class="modal-title">🏆 GLOBAL RANKINGS</h2>
+                <div class="mode-tabs">
+                    <button class="tab-btn active" data-tab="addition">ADD</button>
+                    <button class="tab-btn" data-tab="subtraction">SUB</button>
+                    <button class="tab-btn" data-tab="multiplication">MUL</button>
+                    <button class="tab-btn" data-tab="division">DIV</button>
+                </div>
+                <div id="leaderboard-content" class="table-container">
+                    <p class="loading-text">Loading cloud scores...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Supabase CDN and Core Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="game.js"></script>
 </body>
 </html>
