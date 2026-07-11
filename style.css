@@ -1130,3 +1130,56 @@ body {
     font-size: 0.9rem;
     padding: 2rem 0;
 }
+
+/* ==========================================================================
+   5. MOBILE KEYBOARD & VIEWPORT OPTIMIZATIONS
+   ========================================================================== */
+@media (max-width: 550px) {
+    /* Shrink padding when keyboard is open so play-field gets maximum room */
+    #game-screen {
+        padding: 0.5rem 0.6rem;
+    }
+
+    .game-header {
+        margin-bottom: 0.2rem;
+    }
+
+    /* Compact top scoreboard badges */
+    .stat-badge {
+        padding: 0.2rem 0.4rem;
+        min-width: 48px;
+    }
+    
+    .badge-label {
+        font-size: 0.55rem;
+    }
+    
+    .badge-val {
+        font-size: 0.85rem;
+    }
+
+    .level-indicator {
+        font-size: 1rem;
+    }
+
+    /* Force play area to maintain a healthy playable size */
+    .play-field {
+        margin: 0.3rem 0;
+        min-height: 220px;
+    }
+
+    /* Compact bottom input bar */
+    .game-controls {
+        gap: 0.2rem;
+    }
+
+    .math-input {
+        padding: 0.5rem 1rem;
+        font-size: 1.3rem;
+        border-radius: 14px;
+    }
+
+    .input-tip {
+        display: none; /* Hide helper text on mobile to save valuable screen space */
+    }
+}

@@ -330,25 +330,17 @@ const dom = {
 // ==========================================================================
 function getOrSetPlayerName(customName = null) {
     const STORAGE_KEY = 'bubble_math_player_name';
-    
-    // 1. If the player manually typed a new name and clicked update, lock it in!
     if (customName && customName.trim().length > 0) {
         const cleanName = customName.trim().toUpperCase();
         localStorage.setItem(STORAGE_KEY, cleanName);
         if (dom.nameInput) dom.nameInput.value = cleanName;
         return cleanName;
     }
-    
-    // 2. Try to grab their existing permanently saved identity from localStorage
     let existingName = localStorage.getItem(STORAGE_KEY);
-    
-    // 3. If they don't have one yet (very first time playing on this device), generate and lock!
     if (!existingName || existingName.trim() === '') {
         existingName = getRandomUsername();
         localStorage.setItem(STORAGE_KEY, existingName);
     }
-    
-    // Ensure UI always displays their official locked-in name
     if (dom.nameInput) dom.nameInput.value = existingName;
     return existingName;
 }
@@ -370,11 +362,8 @@ function init() {
     loadHighScores();
     updateMuteUI();
     state.particles = new ParticleSystem('particle-canvas');
-    
-    // Lock in player identity immediately on load
     getOrSetPlayerName();
     
-    // Wire up events
     dom.soundToggle.addEventListener('click', toggleMute);
     dom.modeAddition.addEventListener('click', () => setMode('addition'));
     dom.modeSubtraction.addEventListener('click', () => setMode('subtraction'));
@@ -386,11 +375,15 @@ function init() {
     dom.answerInput.addEventListener('input', handleInput);
     dom.answerInput.addEventListener('keydown', handleKeydown);
 
-    // Leaderboard Events
+    // 🔒 KEYPAD LOCK: Tapping anywhere on the game screen keeps the keyboard open!
+    if (dom.playField) {
+        dom.playField.addEventListener('click', () => {
+            if (state.isPlaying) dom.answerInput.focus();
+        });
+    }
+
     if (dom.leaderboardBtn) dom.leaderboardBtn.addEventListener('click', () => openLeaderboard(state.mode));
     if (dom.closeModalBtn) dom.closeModalBtn.addEventListener('click', closeLeaderboard);
-    
-    // Clicking the button manually updates their username and resubmits!
     if (dom.submitScoreBtn) dom.submitScoreBtn.addEventListener('click', () => submitScoreToCloud(false));
     
     dom.tabBtns.forEach(btn => {
@@ -489,6 +482,13 @@ function startGame() {
     
     updateLivesUI();
     switchScreen('game');
+    
+    // Force mobile keypad to open immediately without waiting for a tap
+    setTimeout(() => {
+        dom.answerInput.focus();
+        dom.answerInput.click();
+    }, 150);
+
     spawnBubble();
     resetSpawnInterval();
     sfx.playLevelUp();
@@ -767,9 +767,7 @@ function endGame() {
     if (isNewHighScore) dom.newHighScoreBanner.classList.remove('hidden');
     else dom.newHighScoreBanner.classList.add('hidden');
     
-    // Ensure name box displays their locked identity
     getOrSetPlayerName();
-    
     switchScreen('results');
 
     // ⚡ AUTOMATIC DIRECT CLOUD SUBMISSION
@@ -872,7 +870,6 @@ async function fetchAndRenderLeaderboard(mode) {
 }
 
 async function submitScoreToCloud(isAuto = false) {
-    // If auto-saving, just grab their permanent identity. If clicking button, take whatever they typed in the box!
     const typedValue = (dom.nameInput && !isAuto) ? dom.nameInput.value : null;
     const playerName = getOrSetPlayerName(typedValue);
     
@@ -899,8 +896,6 @@ async function submitScoreToCloud(isAuto = false) {
         if (dom.submitScoreBtn) {
             dom.submitScoreBtn.innerText = isAuto ? `✅ AUTO-SAVED AS ${playerName}!` : `✅ UPDATED TO ${playerName}!`;
         }
-        
-        // If they manually clicked to change their name, show them the leaderboard!
         if (!isAuto) {
             setTimeout(() => openLeaderboard(state.mode), 400);
         }
