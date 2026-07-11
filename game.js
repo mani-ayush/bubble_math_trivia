@@ -1,9 +1,9 @@
 /**
- * BUBBLE MATH TRIVIA - Complete Game Script with Supabase Leaderboard
+ * BUBBLE MATH TRIVIA - Complete Game Script with Direct Auto-Saving Leaderboard
  */
 
 // ==========================================================================
-// SUPABASE CLOUD LEADERBOARD SETUP
+// SUPABASE CLOUD LEADERBOARD SETUP (PRE-CONFIGURED WITH YOUR KEYS!)
 // ==========================================================================
 const SUPABASE_URL = 'https://wnxqllumojhqgrrvcufz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndueHFsbHVtb2pocWdycnZjdWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3Nzc0NjQsImV4cCI6MjA5OTM1MzQ2NH0.5fY8sEx0YWlA3ojp164pgzyX1NiUtJHmoHCxYbuDYcc';
@@ -334,6 +334,14 @@ function init() {
     updateMuteUI();
     state.particles = new ParticleSystem('particle-canvas');
     
+    // Ensure player has a persistent arcade username saved
+    let savedName = localStorage.getItem('bubble_math_player_name');
+    if (!savedName) {
+        savedName = getRandomUsername();
+        localStorage.setItem('bubble_math_player_name', savedName);
+    }
+    if (dom.nameInput) dom.nameInput.value = savedName;
+    
     // Wire up events
     dom.soundToggle.addEventListener('click', toggleMute);
     dom.modeAddition.addEventListener('click', () => setMode('addition'));
@@ -349,7 +357,9 @@ function init() {
     // Leaderboard Events
     if (dom.leaderboardBtn) dom.leaderboardBtn.addEventListener('click', () => openLeaderboard(state.mode));
     if (dom.closeModalBtn) dom.closeModalBtn.addEventListener('click', closeLeaderboard);
-    if (dom.submitScoreBtn) dom.submitScoreBtn.addEventListener('click', submitScoreToCloud);
+    
+    // Clicking the button now manually updates their username and resubmits!
+    if (dom.submitScoreBtn) dom.submitScoreBtn.addEventListener('click', () => submitScoreToCloud(false));
     
     dom.tabBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -725,13 +735,18 @@ function endGame() {
     if (isNewHighScore) dom.newHighScoreBanner.classList.remove('hidden');
     else dom.newHighScoreBanner.classList.add('hidden');
     
-    // Reset cloud submission UI
-    if (dom.scoreSubmitBox) {
-        dom.scoreSubmitBox.classList.remove('hidden');
-        dom.nameInput.value = '';
-    }
+    // Ensure name box displays their persistent arcade username
+    const currentName = localStorage.getItem('bubble_math_player_name') || getRandomUsername();
+    if (dom.nameInput) dom.nameInput.value = currentName;
     
     switchScreen('results');
+
+    // ⚡ AUTOMATIC DIRECT CLOUD SUBMISSION (Zero clicks required!)
+    if (state.score > 0) {
+        submitScoreToCloud(true);
+    } else if (dom.submitScoreBtn) {
+        dom.submitScoreBtn.innerText = 'SCORE 0 - NOT SAVED';
+    }
 }
 
 // ==========================================================================
@@ -759,7 +774,7 @@ function renderLoop() {
 }
 
 // ==========================================================================
-// LEADERBOARD & RANDOM USERNAME LOGIC
+// LEADERBOARD & AUTO-SAVING LOGIC
 // ==========================================================================
 function getRandomUsername() {
     const adjectives = ['FAST', 'SMART', 'SUPER', 'HYPER', 'MEGA', 'ULTRA', 'COSMIC', 'NEON', 'SPEEDY', 'LOGIC'];
@@ -834,17 +849,23 @@ async function fetchAndRenderLeaderboard(mode) {
     dom.leaderboardContent.innerHTML = tableHtml;
 }
 
-async function submitScoreToCloud() {
-    // If the input box is empty, generate a cool random username!
+// Handles both Direct Auto-Submitting AND manual name changes!
+async function submitScoreToCloud(isAuto = false) {
     let playerName = dom.nameInput.value.trim().toUpperCase();
     if (!playerName) {
         playerName = getRandomUsername();
+        dom.nameInput.value = playerName;
     }
     
-    if (!supabaseClient || state.score <= 0) return;
+    // Remember this name forever
+    localStorage.setItem('bubble_math_player_name', playerName);
     
-    dom.submitScoreBtn.innerText = 'SAVING...';
-    dom.submitScoreBtn.disabled = true;
+    if (state.score <= 0 || !supabaseClient) return;
+    
+    if (dom.submitScoreBtn) {
+        dom.submitScoreBtn.innerText = isAuto ? '⚡ AUTO-SAVING TO CLOUD...' : '⚡ UPDATING NAME...';
+        dom.submitScoreBtn.disabled = true;
+    }
     
     const { error } = await supabaseClient
         .from('leaderboard')
@@ -852,16 +873,22 @@ async function submitScoreToCloud() {
             { player_name: playerName, score: state.score, mode: state.mode }
         ]);
         
-    dom.submitScoreBtn.innerText = 'SUBMIT TO CLOUD';
-    dom.submitScoreBtn.disabled = false;
+    if (dom.submitScoreBtn) dom.submitScoreBtn.disabled = false;
     
     if (error) {
         console.error('Error saving score:', error);
-        alert('Could not save score. Please try again!');
+        if (dom.submitScoreBtn) dom.submitScoreBtn.innerText = '❌ ERROR (CLICK TO RETRY)';
     } else {
         sfx.playCorrect();
-        dom.scoreSubmitBox.classList.add('hidden');
-        openLeaderboard(state.mode);
+        if (dom.submitScoreBtn) {
+            // Let them know it was handled automatically!
+            dom.submitScoreBtn.innerText = isAuto ? `✅ AUTO-SAVED AS ${playerName}!` : `✅ UPDATED TO ${playerName}!`;
+        }
+        
+        // If they manually clicked to change their name, show them the leaderboard!
+        if (!isAuto) {
+            setTimeout(() => openLeaderboard(state.mode), 400);
+        }
     }
 }
 
